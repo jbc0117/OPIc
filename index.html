@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>OPIc 스피킹 트레이너 - 장병찬 마스터</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700&family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background: linear-gradient(135deg, #090d16 0%, #111827 100%);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ubuntu-font {
+            font-family: 'Ubuntu', sans-serif;
+        }
+        .phone-container {
+            max-width: 500px;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh; /* Dynamic viewport height for mobiles */
+            display: flex;
+            flex-direction: column;
+            margin: 0 auto;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .topic-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .topic-card:hover, .topic-card:active {
+            background: rgba(99, 102, 241, 0.12);
+            border-color: rgba(99, 102, 241, 0.35);
+            transform: translateY(-2px);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .btn-active:active {
+            transform: scale(0.95);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="text-slate-100 flex items-center justify-center min-h-screen overflow-hidden">
+
+    <!-- Primary Phone Screen Viewport -->
+    <div class="phone-container bg-slate-950 shadow-2xl relative overflow-hidden flex flex-col">
+        
+        <!-- TOP HEADER -->
+        <header class="glass-card sticky top-0 z-30 px-4 py-3 flex items-center justify-between rounded-b-2xl">
+            <div class="flex items-center gap-2">
+                <button id="header-back-btn" onclick="goBack()" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 btn-active text-slate-400 hidden" title="뒤로가기">
+                    <i class="fa-solid fa-arrow-left text-sm"></i>
+                </button>
+                <button id="header-home-btn" onclick="goToDashboard()" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 btn-active text-indigo-400 hidden" title="처음으로 가기">
+                    <i class="fa-solid fa-house text-sm"></i>
+                </button>
+                <div>
+                    <h1 class="text-xs font-bold tracking-wide text-indigo-400 uppercase ubuntu-font">OPIc MASTER Pro</h1>
+                    <p class="text-[10px] text-slate-400" id="header-subtitle">장병찬 스피킹 트레이너</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN VIEWPORT -->
+        <main class="flex-grow overflow-hidden p-4 flex flex-col">
+            
+            <!-- 1. DASHBOARD VIEW -->
+            <div id="dashboard-view" class="w-full h-full flex flex-col gap-3.5 overflow-hidden">
+
+                <!-- Topic list container -->
+                <div id="topic-container" class="flex-grow overflow-y-auto pr-0.5 space-y-2.5 no-scrollbar pb-4">
+                    <!-- Dynamic Topic Cards (Will be rendered on Load) -->
+                </div>
+            </div>
+
+            <!-- 2. SLIDE LIST VIEW -->
+            <div id="slide-list-view" class="hidden w-full h-full flex flex-col gap-3.5 overflow-hidden">
+                <div class="glass-card rounded-xl p-3.5">
+                    <h2 id="slide-list-title" class="text-base font-bold text-slate-100 line-clamp-2"></h2>
+                </div>
+                <!-- Slide list container -->
+                <div id="slide-container" class="flex-grow overflow-y-auto pr-0.5 space-y-2.5 no-scrollbar pb-4"></div>
+            </div>
+
+            <!-- 3. ACTIVE PRACTICE VIEW -->
+            <div id="practice-view" class="hidden w-full h-full flex flex-col gap-4 overflow-hidden">
+                
+                <!-- This container will be shown first to get user gesture for audio -->
+                <div id="start-practice-wrapper" class="flex-grow flex items-center justify-center">
+                    <button onclick="startPracticeSession()" class="w-full max-w-xs bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 btn-active transition shadow-lg shadow-indigo-600/20">
+                        <i class="fa-solid fa-play"></i>
+                        <span class="text-lg">연습 시작하기</span>
+                    </button>
+                </div>
+
+                <!-- This container holds the actual practice UI, hidden initially -->
+                <div id="practice-ui-wrapper" class="hidden w-full h-full flex flex-col gap-4 overflow-y-auto no-scrollbar pb-4">
+                    <!-- Progress Display -->
+                    <div id="progress-container">
+                        <p id="slide-progress" class="text-sm text-slate-400 text-center font-medium"></p>
+                    </div>
+
+                    <!-- Sentence Pair Display -->
+                    <div class="glass-card rounded-2xl p-6 flex-grow flex flex-col justify-center text-center gap-8 min-h-[300px]">
+                        <!-- Korean Sentence -->
+                        <div class="flex items-center justify-center gap-3">
+                            <p id="korean-sentence" class="text-2xl font-bold leading-relaxed flex-grow"></p>
+                            <button onclick="playSentence('ko')" class="w-10 h-10 rounded-full flex-shrink-0 bg-indigo-500/10 text-indigo-400 flex items-center justify-center btn-active hover:bg-indigo-500/20" title="한국어 문장 듣기">
+                                <i class="fa-solid fa-volume-high text-base"></i>
+                            </button>
+                        </div>
+                        
+                        <hr id="answer-divider" class="border-white/10">
+
+                        <!-- "Show Answer" Button (shown by default for answers) -->
+                        <div id="english-answer-btn-container">
+                            <button onclick="showAnswer()" class="w-full bg-emerald-900/60 border border-emerald-500/30 text-emerald-300 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 btn-active transition hover:bg-emerald-900">
+                                <i class="fa-solid fa-key text-sm"></i>
+                                <span>답변 보기</span>
+                            </button>
+                        </div>
+                        <!-- English Sentence (hidden by default for answers) -->
+                        <div id="english-answer-container" class="hidden flex items-center justify-center gap-3">
+                            <p id="english-sentence" class="text-xl font-semibold leading-relaxed flex-grow"></p>
+                             <button onclick="playSentence('en')" class="w-10 h-10 rounded-full flex-shrink-0 bg-emerald-500/10 text-emerald-400 flex items-center justify-center btn-active hover:bg-emerald-500/20" title="영어 문장 듣기">
+                                <i class="fa-solid fa-volume-high text-base"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sentence Navigation -->
+                    <div class="grid grid-cols-2 gap-4 pt-2">
+                        <button onclick="navigateSentence(-1)" class="glass-card text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 btn-active transition hover:bg-white/10">
+                            <i class="fa-solid fa-chevron-left text-base text-indigo-400"></i>
+                            <span class="text-lg">이전 문장</span>
+                        </button>
+                        <button onclick="navigateSentence(1)" class="bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 btn-active transition shadow-lg shadow-indigo-600/20">
+                            <span class="text-lg">다음 문장</span>
+                            <i class="fa-solid fa-chevron-right text-base"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- TOAST ALERTS SYSTEM -->
+    <div id="toast-container" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-1.5 w-11/12 max-w-[320px]"></div>
+
+    <!-- Silent audio element to unlock audio context on mobile -->
+    <audio id="audio-unlock" src="data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAAgAAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zRDEQAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV" preload="auto" style="display:none"></audio>
+
+    <!-- MAIN ENGINE DATA & CONTROL SCRIPTS -->
+    <script src="generated_opicData.js"></script>
+    <script>
+        // Global State Controller
+        let activeTopicIndex = -1;
+        let activeSlideIndex = -1;
+        let allSentencePairsForTopic = [];
+        let currentSentenceIndex = -1;
+        let availableVoices = [];
+        let viewStack = ['dashboard-view'];
+
+        // DOM Elements
+        const headerHomeBtn = document.getElementById('header-home-btn');
+        const headerBackBtn = document.getElementById('header-back-btn');
+        const headerSubtitle = document.getElementById('header-subtitle');
+        const allViews = ['dashboard-view', 'slide-list-view', 'practice-view'];
+
+        // Initialize App on DOM Load
+        window.addEventListener('DOMContentLoaded', () => {
+            renderDashboardList();
+            initTTSEngine();
+            showView('dashboard-view', true); // Initial setup
+        });
+
+        // --- View Management ---
+        function showView(viewId, isInitial = false) {
+            if (!isInitial && viewStack[viewStack.length - 1] === viewId) return;
+
+            allViews.forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById(viewId).classList.remove('hidden');
+
+            if (!isInitial) {
+                viewStack.push(viewId);
+            }
+
+            // Manage header buttons
+            if (viewStack.length > 1) {
+                headerHomeBtn.classList.remove('hidden');
+                headerBackBtn.classList.remove('hidden');
+            } else {
+                headerHomeBtn.classList.add('hidden');
+                headerBackBtn.classList.add('hidden');
+            }
+        }
+
+        function goBack() {
+            if (viewStack.length <= 1) return;
+            resetSpeech();
+            viewStack.pop();
+            const previousViewId = viewStack[viewStack.length - 1];
+
+            if (previousViewId === 'dashboard-view') {
+                headerSubtitle.innerText = "장병찬 스피킹 트레이너";
+            } else if (previousViewId === 'slide-list-view') {
+                headerSubtitle.innerText = opicData[activeTopicIndex].title;
+            }
+            
+            allViews.forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById(previousViewId).classList.remove('hidden');
+
+            if (viewStack.length > 1) {
+                headerHomeBtn.classList.remove('hidden');
+                headerBackBtn.classList.remove('hidden');
+            } else {
+                headerHomeBtn.classList.add('hidden');
+                headerBackBtn.classList.add('hidden');
+            }
+        }
+
+        function goToDashboard() {
+            resetSpeech();
+            viewStack = ['dashboard-view'];
+            headerSubtitle.innerText = "장병찬 스피킹 트레이너";
+            showView('dashboard-view', true);
+        }
+
+        // Toast Messages
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'error' ? 'bg-rose-950/95 border-rose-500/50' : 'bg-indigo-950/95 border-indigo-500/50';
+            const icon = type === 'error' ? 'fa-circle-exclamation text-rose-400' : 'fa-circle-info text-indigo-400';
+            
+            toast.className = `${bgColor} border text-white text-[10px] px-3.5 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 backdrop-blur-md transition-all duration-300 opacity-0 transform translate-y-2`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icon} text-xs flex-shrink-0"></i>
+                <span class="flex-grow font-medium leading-normal">${message}</span>
+            `;
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.classList.remove('opacity-0', 'translate-y-2'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        function formatAndSplitTitle(title) {
+            const titleWithoutStars = title.replace(/★/g, '').trim();
+            
+            // Find the first occurrence of an English word to use as a split point.
+            const match = titleWithoutStars.match(/\s[A-Za-z]/);
+            
+            if (match) {
+                const splitIndex = match.index;
+                const line1 = titleWithoutStars.substring(0, splitIndex).trim();
+                const line2 = titleWithoutStars.substring(splitIndex).trim();
+                return `${line1}<br><span class="text-base font-medium text-slate-300">${line2}</span>`;
+            }
+            
+            return titleWithoutStars; // Fallback for titles that don't fit the pattern
+        }
+
+        // Render Dashboard (Main Topics)
+        function renderDashboardList() {
+            const container = document.getElementById('topic-container');
+            container.innerHTML = '';
+
+            opicData.forEach((topic, index) => {
+                const card = document.createElement('div');
+                card.className = "topic-card rounded-xl p-3.5 flex flex-col justify-between cursor-pointer btn-active shadow-md min-h-[88px]";
+                card.onclick = () => selectTopic(index);
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-1.5">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-5 h-5 rounded bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold text-[10px] ubuntu-font">${String(index + 1).padStart(2, '0')}</span>
+                            <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">OPIc UNIT</span>
+                        </div>
+                        <div class="flex items-center gap-1 text-[9px] text-slate-500">
+                            <i class="fa-solid fa-copy"></i>
+                            <span>${topic.slides.length}개 지문</span>
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-100 leading-tight">${formatAndSplitTitle(topic.title)}</h3>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Helper to get slide title from the first line
+        function getSlideTitle(slide) {
+            return (slide.korean.split('\n')[0] || "제목 없음").trim();
+        }
+
+        // Step 1: Select a main topic and show its slides
+        function selectTopic(index) {
+            resetSpeech();
+            activeTopicIndex = index;
+            const topic = opicData[index];
+            
+            const slideContainer = document.getElementById('slide-container');
+            slideContainer.innerHTML = '';
+
+            topic.slides.forEach((slide, slideIndex) => {
+                const slideTitle = getSlideTitle(slide);
+                const card = document.createElement('div');
+                card.className = "topic-card rounded-xl p-4 flex items-center justify-between cursor-pointer btn-active shadow-md";
+                card.onclick = () => selectSlide(index, slideIndex);
+                card.innerHTML = `
+                    <h3 class="text-base font-semibold text-slate-100 line-clamp-2 flex-grow pr-4">${slideTitle}</h3>
+                    <i class="fa-solid fa-chevron-right text-slate-500"></i>
+                `;
+                slideContainer.appendChild(card);
+            });
+
+            headerSubtitle.innerText = topic.title;
+            document.getElementById('slide-list-title').innerText = topic.title;
+            showView('slide-list-view');
+        }
+
+        // Step 2: Select a slide and go to practice view
+        function selectSlide(topicIndex, slideIndex) {
+            resetSpeech();
+            activeTopicIndex = topicIndex;
+            activeSlideIndex = slideIndex;
+            const slide = opicData[topicIndex].slides[slideIndex];
+
+            allSentencePairsForTopic = [];
+
+            // --- Extract Question and Answer blocks ---
+            const koreanParts = slide.korean.split(/\n\n\n/);
+            const englishParts = slide.english.split(/\n\n\n/);
+
+            const hasQuestion = koreanParts.length > 1 && englishParts.length > 1;
+
+            if (hasQuestion) {
+                // The first part is Title + Question. We extract just the question.
+                const englishQuestionBlock = englishParts[0].split('\n').slice(1).join('\n').trim();
+                const koreanQuestionBlock = koreanParts[0].split('\n').slice(1).join('\n').trim();
+                if (englishQuestionBlock) {
+                    allSentencePairsForTopic.push({
+                        korean: englishQuestionBlock, // English question in the main display area
+                        english: koreanQuestionBlock, // Korean question in the secondary area
+                        isQuestion: true
+                    });
+                }
+            }
+
+            // --- Extract Answer sentences ---
+            const koreanAnswerBlock = (hasQuestion ? koreanParts.slice(1).join('\n\n\n') : koreanParts[0]).trim();
+            const englishAnswerBlock = (hasQuestion ? englishParts.slice(1).join('\n\n\n') : englishParts[0]).trim();
+            
+            const koreanSentences = koreanAnswerBlock.split('\n').filter(l => l.trim() !== '');
+            const englishSentences = englishAnswerBlock.split('\n').filter(l => l.trim() !== '');
+            
+            const numPairs = Math.min(koreanSentences.length, englishSentences.length);
+            for (let i = 0; i < numPairs; i++) {
+                if (koreanSentences[i] && englishSentences[i]) {
+                    allSentencePairsForTopic.push({
+                        korean: koreanSentences[i].trim(),
+                        english: englishSentences[i].trim(),
+                        isQuestion: false
+                    });
+                }
+            }
+
+            if (allSentencePairsForTopic.length === 0) {
+                showToast('이 주제에는 학습할 문장이 없습니다.', 'error');
+                return;
+            }
+
+            headerSubtitle.innerText = getSlideTitle(slide);
+            currentSentenceIndex = -1; // Reset index
+            
+            // Show the start button, hide the practice UI
+            document.getElementById('start-practice-wrapper').classList.remove('hidden');
+            document.getElementById('practice-ui-wrapper').classList.add('hidden');
+            
+            showView('practice-view');
+        }
+
+        function startPracticeSession() {
+            // --- Audio Unlocking for Mobile Browsers ---
+            const audioUnlocker = document.getElementById('audio-unlock');
+            if (audioUnlocker && audioUnlocker.paused) {
+                audioUnlocker.play().catch(() => {});
+            }
+
+            if ('speechSynthesis' in window && !window.speechSynthesis.speaking) {
+                resetSpeech();
+                const utterance = new SpeechSynthesisUtterance(" ");
+                window.speechSynthesis.speak(utterance);
+            }
+
+            // Hide start button, show practice UI
+            document.getElementById('start-practice-wrapper').classList.add('hidden');
+            document.getElementById('practice-ui-wrapper').classList.remove('hidden');
+            
+            // Manually set up and play the first sentence
+            currentSentenceIndex = 0;
+            updateSentenceView(false); // Update UI first without auto-playing
+            const firstPair = allSentencePairsForTopic[0];
+            if (firstPair) playSentence(firstPair.isQuestion ? 'en' : 'ko'); // Then play directly
+        }
+        // Speech Engine Synthesis (TTS)
+        function initTTSEngine() {
+            if ('speechSynthesis' in window) {
+                const loadVoices = () => {
+                    availableVoices = window.speechSynthesis.getVoices();
+                };
+                
+                loadVoices();
+                if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                    window.speechSynthesis.onvoiceschanged = loadVoices;
+                }
+            }
+        }
+
+        function playSentence(lang) {
+            if (!('speechSynthesis' in window) || allSentencePairsForTopic.length === 0) return;
+
+            // Ensure voices are loaded, especially on mobile where it can be delayed.
+            if (availableVoices.length === 0) {
+                availableVoices = window.speechSynthesis.getVoices();
+            }
+
+            resetSpeech();
+
+            const sentencePair = allSentencePairsForTopic[currentSentenceIndex];
+            if (!sentencePair) return;
+
+            let text;
+            let textLang;
+
+            // If the user clicks a speaker button, 'lang' is 'ko' or 'en'.
+            // If it's an auto-play from updateSentenceView, it's also 'ko' or 'en'.
+            if (sentencePair.isQuestion) {
+                // For the question slide, the main text is English, secondary is Korean.
+                text = lang === 'ko' ? sentencePair.english : sentencePair.korean;
+                textLang = lang === 'ko' ? 'ko' : 'en';
+            } else {
+                // For answer slides, the main text is Korean, secondary is English.
+                text = lang === 'ko' ? sentencePair.korean : sentencePair.english;
+                textLang = lang;
+            }
+            
+            if (!text) return;
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0;
+
+            if (textLang === 'ko') {
+                utterance.lang = 'ko-KR';
+                const koVoice = availableVoices.find(v => v.lang.startsWith('ko-KR'));
+                if (koVoice) utterance.voice = koVoice;
+            } else {
+                utterance.lang = 'en-US';
+                const enVoice = availableVoices.find(v => v.lang.startsWith('en-US') && v.name.includes('Google'));
+                if (enVoice) utterance.voice = enVoice;
+            }
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function showAnswer() {
+            document.getElementById('english-answer-btn-container').classList.add('hidden');
+            document.getElementById('english-answer-container').classList.remove('hidden');
+            playSentence('en');
+        }
+
+        function resetSpeech() {
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        }
+
+        function updateSentenceView(autoPlay = true) {
+            const koreanEl = document.getElementById('korean-sentence');
+            const englishEl = document.getElementById('english-sentence');
+            const progressEl = document.getElementById('slide-progress');
+            const answerBtnContainer = document.getElementById('english-answer-btn-container');
+            const answerContainer = document.getElementById('english-answer-container');
+            const answerDivider = document.getElementById('answer-divider');
+
+            if (currentSentenceIndex >= 0 && allSentencePairsForTopic.length > 0) {
+                const pair = allSentencePairsForTopic[currentSentenceIndex];
+                koreanEl.innerText = pair.korean;
+                englishEl.innerText = pair.english;
+
+                // Reset styles before applying new ones
+                koreanEl.classList.remove('text-slate-100', 'text-emerald-300');
+                englishEl.classList.remove('text-emerald-300', 'text-slate-100');
+
+                if (pair.isQuestion) {
+                    progressEl.innerText = `질문`;
+                    koreanEl.classList.add('text-emerald-300'); // English question
+                    englishEl.classList.add('text-slate-100'); // Korean question
+                    
+                    // For questions, show the answer area directly
+                    answerBtnContainer.classList.add('hidden');
+                    answerContainer.classList.remove('hidden');
+                    answerDivider.classList.remove('hidden');
+
+                    if (autoPlay) playSentence('en'); // Auto-play the English question
+
+                } else {
+                    const questionOffset = allSentencePairsForTopic[0]?.isQuestion ? 1 : 0;
+                    progressEl.innerText = `문장 ${currentSentenceIndex + 1 - questionOffset} / ${allSentencePairsForTopic.length - questionOffset}`;
+                    koreanEl.classList.add('text-slate-100'); // Korean answer
+                    englishEl.classList.add('text-emerald-300'); // English answer
+
+                    // For answers, hide the answer and show the button
+                    answerBtnContainer.classList.remove('hidden');
+                    answerContainer.classList.add('hidden');
+                    answerDivider.classList.remove('hidden');
+
+                    if (autoPlay) playSentence('ko'); // Auto-play the Korean answer
+                }
+            }
+        }
+
+        function navigateSentence(direction) {
+            resetSpeech();
+            const newIndex = currentSentenceIndex + direction;
+            
+            if (newIndex < 0) {
+                showToast('첫 번째 문장입니다.', 'info');
+                return;
+            }
+            
+            if (newIndex >= allSentencePairsForTopic.length) {
+                showToast('마지막 문장입니다. 다른 주제를 선택하세요.', 'info');
+                return;
+            }
+            
+            currentSentenceIndex = newIndex;
+            updateSentenceView(true);
+        }
+    </script>
+</body>
+</html>
